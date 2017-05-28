@@ -53,3 +53,12 @@ getNeighboursPositions (Honeycomb hc) (x, y) = [(sx, sy) | (sx, sy) <-
                                      (x+1,ny-1):[(x+1,ny)],
                                      sx>=0, x< (length hc), sy>=0, sy<(length (hc!!sx))]
                                      where ny = if even x then y+1 else y
+
+-- Returns a list of all letters that can be put in a given slot
+getPossibleLetters :: Honeycomb -> (Int, Int) -> [Char]
+getPossibleLetters (Honeycomb hc) (x, y) = [c | c <- "ABCDEFG", notInNeighbourhoods c (map (getNeighbours (Honeycomb hc)) (getNeighboursPositions (Honeycomb hc) (x,y)))]
+
+-- Returns true if a char is absent from all sequences, false otherwise
+notInNeighbourhoods :: Char -> [[Char]] -> Bool
+notInNeighbourhoods c [] = True
+notInNeighbourhoods c (x:xs) = if not (elem c x) then notInNeighbourhoods c xs else False
