@@ -51,7 +51,7 @@ getNeighboursPositions (Honeycomb hc) (x, y) = [(sx, sy) | (sx, sy) <-
                                      (x-1, ny-1):(x-1,ny):
                                      (x,y-1):(x,y):(x,y+1):
                                      (x+1,ny-1):[(x+1,ny)],
-                                     sx>=0, x< (length hc), sy>=0, sy<(length (hc!!sx))]
+                                     sx>=0, sx< (length hc), sy>=0, sy<(length (hc!!sx))]
                                      where ny = if even x then y+1 else y
 
 -- Returns a list of all letters that can be put in a given slot
