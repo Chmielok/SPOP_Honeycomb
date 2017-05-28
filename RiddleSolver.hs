@@ -37,7 +37,7 @@ isAllowedLetter x = elem x ".ABCDEFG"
 putLetter :: Honeycomb -> Char -> (Int, Int) -> Honeycomb
 putLetter (Honeycomb hc) c (x, y) = Honeycomb ((take x hc) ++ [take y (hc!!x) ++ [c] ++ drop (y+1) (hc!!x)] ++ (drop (x+1) hc))
 
--- Returns a letter at position x,y-1
+-- Returns a letter at position x,y
 getLetter :: Honeycomb -> (Int, Int) -> Char
 getLetter (Honeycomb hc) (x, y) = hc!!x!!y
 
@@ -67,14 +67,16 @@ notInNeighbourhoods c (x:xs) = if not (elem c x) then notInNeighbourhoods c xs e
 getEmptyFields :: Honeycomb -> [(Int, Int)]
 getEmptyFields (Honeycomb hc) = [(x,y) | (x,y) <- getAllFields (Honeycomb hc), getLetter (Honeycomb hc) (x,y) == '.']
                                 where getAllFields (Honeycomb hc) = [(x,y)| x <- [0..(length hc - 1)], y <- [0..(length (hc!!x) -1)]]
-
+								
+-- Iterates over a honeycomb, filling all single-option gaps until either no change is made or all fields are filled
 fillSingleGaps :: Honeycomb -> Honeycomb
 fillSingleGaps (Honeycomb hc) | null emptyFields = (Honeycomb hc)
                               | filled == (Honeycomb hc) = (Honeycomb hc)
                               | otherwise = fillSingleGaps filled
                            where emptyFields = getEmptyFields (Honeycomb hc)
                                  filled = fillSingleGapsStep (Honeycomb hc) emptyFields
-
+								 
+-- Fills all single-option empty gaps in one step - more single-option gaps might be found after that
 fillSingleGapsStep :: Honeycomb -> [(Int, Int)] -> Honeycomb
 fillSingleGapsStep (Honeycomb hc) [] = (Honeycomb hc)
 fillSingleGapsStep (Honeycomb hc) (x:xs) | length possible == 1 = fillSingleGapsStep (putLetter (Honeycomb hc) (possible!!0) x) xs
