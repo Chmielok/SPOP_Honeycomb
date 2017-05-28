@@ -1,7 +1,7 @@
 module RiddleSolver where
 import Data.List (sortBy)
 
-data Honeycomb = Honeycomb [String] deriving (Show, Read)
+data Honeycomb = Honeycomb [String] deriving (Show, Read, Eq)
 
 -- Applies 3 validations:
 -- 1. Correct number of rows
@@ -62,3 +62,21 @@ getPossibleLetters (Honeycomb hc) (x, y) = [c | c <- "ABCDEFG", notInNeighbourho
 notInNeighbourhoods :: Char -> [[Char]] -> Bool
 notInNeighbourhoods c [] = True
 notInNeighbourhoods c (x:xs) = if not (elem c x) then notInNeighbourhoods c xs else False
+
+-- Returns a list of all empty fields in a honeycomb
+getEmptyFields :: Honeycomb -> [(Int, Int)]
+getEmptyFields (Honeycomb hc) = [(x,y) | (x,y) <- getAllFields (Honeycomb hc), getLetter (Honeycomb hc) (x,y) == '.']
+                                where getAllFields (Honeycomb hc) = [(x,y)| x <- [0..(length hc - 1)], y <- [0..(length (hc!!x) -1)]]
+
+fillSingleGaps :: Honeycomb -> Honeycomb
+fillSingleGaps (Honeycomb hc) | null emptyFields = (Honeycomb hc)
+                              | filled == (Honeycomb hc) = (Honeycomb hc)
+                              | otherwise = fillSingleGaps filled
+                           where emptyFields = getEmptyFields (Honeycomb hc)
+                                 filled = fillSingleGapsStep (Honeycomb hc) emptyFields
+
+fillSingleGapsStep :: Honeycomb -> [(Int, Int)] -> Honeycomb
+fillSingleGapsStep (Honeycomb hc) [] = (Honeycomb hc)
+fillSingleGapsStep (Honeycomb hc) (x:xs) | length possible == 1 = fillSingleGapsStep (putLetter (Honeycomb hc) (possible!!0) x) xs
+                                         | otherwise = fillSingleGapsStep (Honeycomb hc) xs
+                                    where possible = getPossibleLetters (Honeycomb hc) x
