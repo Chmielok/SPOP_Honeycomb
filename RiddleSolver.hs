@@ -67,7 +67,7 @@ notInNeighbourhoods c (x:xs) = if not (elem c x) then notInNeighbourhoods c xs e
 getEmptyFields :: Honeycomb -> [(Int, Int)]
 getEmptyFields (Honeycomb hc) = [(x,y) | (x,y) <- getAllFields (Honeycomb hc), getLetter (Honeycomb hc) (x,y) == '.']
                                 where getAllFields (Honeycomb hc) = [(x,y)| x <- [0..(length hc - 1)], y <- [0..(length (hc!!x) -1)]]
-								
+
 -- Iterates over a honeycomb, filling all single-option gaps until either no change is made or all fields are filled
 fillSingleGaps :: Honeycomb -> Honeycomb
 fillSingleGaps (Honeycomb hc) | null emptyFields = (Honeycomb hc)
@@ -75,10 +75,42 @@ fillSingleGaps (Honeycomb hc) | null emptyFields = (Honeycomb hc)
                               | otherwise = fillSingleGaps filled
                            where emptyFields = getEmptyFields (Honeycomb hc)
                                  filled = fillSingleGapsStep (Honeycomb hc) emptyFields
-								 
+
 -- Fills all single-option empty gaps in one step - more single-option gaps might be found after that
 fillSingleGapsStep :: Honeycomb -> [(Int, Int)] -> Honeycomb
 fillSingleGapsStep (Honeycomb hc) [] = (Honeycomb hc)
 fillSingleGapsStep (Honeycomb hc) (x:xs) | length possible == 1 = fillSingleGapsStep (putLetter (Honeycomb hc) (possible!!0) x) xs
                                          | otherwise = fillSingleGapsStep (Honeycomb hc) xs
                                     where possible = getPossibleLetters (Honeycomb hc) x
+
+-- Tries to solve the riddle. If it's not possible, it show an error message
+solve :: Honeycomb -> Honeycomb
+solve hc = case solveFiltered (fillSingleGaps hc) of
+    (_, False) -> error "brak rozwiązania"
+    (solution, True) -> solution
+
+-- Actual solving happens here. The honeycomb passed to this method is cleaned beforehand from obvious cells.
+-- If the honeycomb is already solved, it is returned automatically
+-- If not, the "guessing magic" (backtracking algorithm) starts
+solveFiltered :: Honeycomb -> (Honeycomb, Bool)
+solveFiltered hc
+    | getEmptyFields hc == [] = (hc, True)
+    | otherwise = fill hc sortedEmptyFields lettersPossibleForFirstField
+    where sortedEmptyFields = sortBy (\x y -> compare (length (getPossibleLetters hc x)) (length (getPossibleLetters hc y))) (getEmptyFields hc)
+          lettersPossibleForFirstField = getPossibleLetters hc (head sortedEmptyFields)
+
+-- This function runs recursively and tries to fill all the fields, that were not previously filled.
+-- It runs through a list of empty fields filling them with a letter. If the added letter makes the puzzle unsolvable, it goes back and tries a different letter.
+-- If it runs out of letters, a 'False' message is passed, and the previous cell is informed it should try to be filled with another letter.
+-- If there is a letter that fits the last cell, the puzzle is solved and 'True' message is passed.
+-- If the first cell returns 'False' message, the riddle is unsolvable.
+fill :: Honeycomb -> [(Int, Int)] -> [Char] -> (Honeycomb, Bool)
+fill hc _ [] = (hc, False)
+fill hc [cell] (letter:letters) = (putLetter hc letter cell, True)
+fill hc (cell:nextCell:cells) (letter:letters)
+    | putAndCheck == [] = fill hc (cell:nextCell:cells) letters
+    | otherwise = case fill put (nextCell:cells) putAndCheck of
+        (newHc, True) -> (newHc, True)
+        (newHc, False) -> fill hc (cell:nextCell:cells) letters
+    where put = putLetter hc letter cell
+          putAndCheck = getPossibleLetters put nextCell

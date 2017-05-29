@@ -6,4 +6,4 @@ main = do putStrLn "Podaj ścieżkę do pliku z łamigłówką:"
           file <- readFile fileName
           if isCorrect (read file :: Honeycomb) == False
             then putStrLn "Podany plik nie jest poprawny."
-          else putStrLn ("Rozwiązanie: " ++ "nie zaimplementowano")
+          else putStrLn ("Rozwiązanie: " ++ show (solve (read file :: Honeycomb)))
